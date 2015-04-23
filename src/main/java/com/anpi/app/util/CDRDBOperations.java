@@ -78,7 +78,7 @@ public class CDRDBOperations {
 					}
 					// Set the inbound,outbound and intercom based on the count value.
 					inBound.add("[" + (new Date(fromDateMilli)).getTime() + "," + inLogCount + "]");
-					outBound.add("[" + (new Date(fromDateMilli)).getTime() + "," + 0 + "]");
+					outBound.add("[" + (new Date(fromDateMilli)).getTime() + "," + outLogCount + "]");
 					interCom.add("[" + (new Date(fromDateMilli)).getTime() + "," + interCount + "]");
 					fromDateMilli = tempTimeMilli;
 					
