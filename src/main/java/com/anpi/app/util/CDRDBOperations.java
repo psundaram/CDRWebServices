@@ -28,7 +28,7 @@ public class CDRDBOperations {
 			if (fromDateMilli < toDateMilli) {
 				// Connect to database
 				conn = cdrConnector.getDBConnection();
-				String stInsert = "select A.starttime,A.endtime,SUM(CASE WHEN direction = 'In' THEN 1 ELSE 2 END) as directiontype from (SELECT direction,starttime,endtime,fromnumber,tonumber,duration FROM tbCallLog where enterpriseid ='100926'  and (starttime>1379611843479 and endtime<1379621846482) group by  direction,starttime,endtime,fromnumber,tonumber,duration ) as A  group by  starttime,endtime,fromnumber,tonumber,duration"; 
+				String stInsert = "select A.starttime,A.endtime,SUM(CASE WHEN direction = 'In' THEN 1 ELSE 2 END) as directiontype from (SELECT direction,starttime,endtime,fromnumber,tonumber,duration FROM tbCallLog where enterpriseid =?  and (starttime>? and endtime<?) group by  direction,starttime,endtime,fromnumber,tonumber,duration ) as A  group by  starttime,endtime,fromnumber,tonumber,duration"; 
 //						"select starttime,endtime,SUM(CASE WHEN direction = 'In' THEN 1 ELSE 2 END) as directiontype from (select * from  (SELECT direction,starttime,endtime,fromnumber,tonumber,duration FROM tbCallLog where enterpriseid =?  and (starttime>? and endtime<?)) as directions  group by  direction,starttime,endtime,fromnumber,tonumber,duration ) as cdr  group by  starttime,endtime,fromnumber,tonumber,duration";
 				// String stInsert =
 				// "select starttime,endtime,SUM(CASE WHEN a.direction = 'In' THEN 1 ELSE 2 END) as directiontype from (SELECT direction,starttime,endtime,fromnumber,tonumber,duration FROM tbCallLog where enterpriseid =? and (starttime>? and endtime<?)) as a group by a.starttime,a.endtime,a.fromnumber,a.tonumber,a.duration;";
