@@ -9,25 +9,25 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Controller;
+
 import com.anpi.app.domain.TrafficBean;
 import com.anpi.app.domain.TrafficLoadBean;
 import com.anpi.app.util.CDRDBOperations;
 import com.google.common.base.Strings;
 
+@Component
 public class TrafficLoadService {
 
-	public String getTrafficLoad(String content) throws Exception {
+	public TrafficLoadBean getTrafficLoad(TrafficBean trafficModel) throws Exception {
 		TrafficLoadBean loadBean = new TrafficLoadBean();
-		JAXBContext jaxbContext = JAXBContext.newInstance(TrafficBean.class);
-		Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-		StringReader reader = new StringReader(content.toString());
-		TrafficBean trafficModel = (TrafficBean) unmarshaller.unmarshal(reader);
 		String stEnterpriseId = trafficModel.getEnterpriseId();
 		// Null or Empty Check - EnterpriseId
 		if (Strings.isNullOrEmpty(stEnterpriseId)) {
 			loadBean.setResponseCode("2");
 			loadBean.setResponseText("EnterpriseId is mandatory");
-			return marshal(loadBean);
+			return loadBean;
 		}
 		CDRDBOperations dbOperations = new CDRDBOperations();
 		String stFromDate = trafficModel.getFromTime();
@@ -42,26 +42,26 @@ public class TrafficLoadService {
 		if (Strings.isNullOrEmpty(incremenType)) {
 			loadBean.setResponseCode("2");
 			loadBean.setResponseText("IncType is mandatory");
-			return marshal(loadBean);
+			return loadBean;
 		} else {
 			inIcrementType = getIncrementTypeValue(incremenType.trim());
 			if (inIcrementType == 0) {
 				loadBean.setResponseCode("2");
 				loadBean.setResponseText("Invalid IncType");
-				return marshal(loadBean);
+				return loadBean;
 			}
 		}
 		// Null or Empty Check - Incvalue
 		if (Strings.isNullOrEmpty(trafficModel.getIncValue())) {
 			loadBean.setResponseCode("2");
 			loadBean.setResponseText("IncValue is mandatory");
-			return marshal(loadBean);
+			return loadBean;
 		} else {
 			inIncrementValue = Long.parseLong(trafficModel.getIncValue());
 			if (inIncrementValue <= 0) {
 				loadBean.setResponseCode("2");
 				loadBean.setResponseText("Invalid IncValue");
-				return marshal(loadBean);
+				return loadBean;
 			} else {
 				inIncrementValue = inIncrementValue * inIcrementType;
 			}
@@ -80,7 +80,7 @@ public class TrafficLoadService {
 		} catch (Exception e) {
 			loadBean.setResponseCode("2");
 			loadBean.setResponseText("Invalid Date");
-			return marshal(loadBean);
+			return loadBean;
 		}
 		if (dtFromDate != null && dtToDate != null) {
 			loadBean = dbOperations.getTrafficLoad(stEnterpriseId, dtFromDate.getTime(), dtToDate.getTime(), inIncrementValue);
@@ -97,9 +97,9 @@ public class TrafficLoadService {
 		} else {
 			loadBean.setResponseCode("2");
 			loadBean.setResponseText("Request should contain either FromTime or ToTime");
-			return marshal(loadBean);
+			return loadBean;
 		}
-		return marshal(loadBean);
+		return loadBean;
 	}
 
 	public String marshal(TrafficLoadBean loadBean) throws Exception {

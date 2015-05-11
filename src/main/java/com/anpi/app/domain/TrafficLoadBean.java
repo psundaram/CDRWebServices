@@ -3,12 +3,19 @@ package com.anpi.app.domain;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import com.google.gson.annotations.SerializedName;
+
 @XmlRootElement(name = "TrafficLoad")
 public class TrafficLoadBean {
+	@SerializedName("response_code")
 	private String responseCode;
+	@SerializedName("response_text")
 	private String responseText;
+	@SerializedName(value="in_bound")
 	private String inBoundLoad;
+	@SerializedName(value="out_bound")
 	private String outBoundLoad;
+	@SerializedName(value="inter_com")
 	private String interComLoad;
 
 	public String getResponseCode() {
@@ -56,4 +63,12 @@ public class TrafficLoadBean {
 		this.interComLoad = interComLoad;
 	}
 
+	@Override
+	public String toString() {
+		return "TrafficLoadBean [responseCode=" + responseCode + ", responseText=" + responseText + ", inBoundLoad=" + inBoundLoad + ", outBoundLoad=" + outBoundLoad + ", interComLoad="
+				+ interComLoad + "]";
+	}
+	
+	
+	
 }

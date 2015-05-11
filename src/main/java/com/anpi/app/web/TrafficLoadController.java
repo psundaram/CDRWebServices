@@ -1,5 +1,11 @@
 package com.anpi.app.web;
 
+import java.io.StringReader;
+
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Unmarshaller;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -7,16 +13,41 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.anpi.app.domain.TrafficBean;
+import com.anpi.app.domain.TrafficLoadBean;
 import com.anpi.app.service.TrafficLoadService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 
 @Controller
 @RequestMapping("/trafficLoad")
 public class TrafficLoadController {
 
+	@Autowired
+	TrafficLoadService trafficLoadService;
+	
 
 	@RequestMapping(method = RequestMethod.POST, consumes = MediaType.APPLICATION_XML_VALUE, produces = MediaType.APPLICATION_XML_VALUE)
 	@ResponseBody
 	public String getTrafficLoad(@RequestBody String content) throws Exception {
-		return new TrafficLoadService().getTrafficLoad(content);
+		JAXBContext jaxbContext = JAXBContext.newInstance(TrafficBean.class);
+		Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+		StringReader reader = new StringReader(content.toString());
+		TrafficBean trafficModel = (TrafficBean) unmarshaller.unmarshal(reader);
+		TrafficLoadBean trafficLoadBean = trafficLoadService.getTrafficLoad(trafficModel);
+		return trafficLoadService.marshal(trafficLoadBean);
+	}
+	
+	
+	@RequestMapping(value="/json",method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+	public String getTrafficLoadJson(@RequestBody String loadBean) throws Exception {
+		System.out.println("loadBean :" + loadBean);
+		ObjectMapper mapper = new ObjectMapper();
+		TrafficBean trafficBean = mapper.readValue(loadBean, TrafficBean.class);
+		TrafficLoadBean trafficLoadBean = trafficLoadService.getTrafficLoad(trafficBean);
+		String responseString = new Gson().toJson(trafficLoadBean, TrafficLoadBean.class);
+		System.out.println(responseString);
+		return responseString;
 	}
 }

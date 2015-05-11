@@ -1,15 +1,25 @@
 package com.anpi.app.domain;
 
+import java.io.Serializable;
+
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.annotations.SerializedName;
+
 @XmlRootElement(name="root")
-public class TrafficBean {
+public class TrafficBean implements Serializable{
 	
+	@JsonProperty("enterprise_id")
 	private String enterpriseId;
+	@JsonProperty("from_time")
 	private String fromTime;
+	@JsonProperty("to_time")
 	private String toTime;
+	@JsonProperty("inc_type")
 	private String incType;
+	@JsonProperty("inc_value")
 	private String incValue;
 	
 	@XmlElement(name="EnterpriseId")

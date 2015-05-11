@@ -57,6 +57,10 @@
 		<commons-io.version>${commons-fileupload.version}.2</commons-io.version>
 		<commons-fileupload.version>1.3</commons-fileupload.version>
 		<json-lib.version>2.2.2</json-lib.version>
+		<jackson-core.version>2.3.2</jackson-core.version>
+        <jackson-databind.version>2.3.2</jackson-databind.version>
+        <jackson-mapper-asl.version>1.9.0</jackson-mapper-asl.version>
+        <jackson-core-asl.version>1.1.0</jackson-core-asl.version>
 	</properties>
 
 	<dependencies>
@@ -223,6 +227,30 @@
 			<version>2.2.4</version>
 		</dependency>
 
+		 <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+             <version>${jackson-core.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson-databind.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-mapper-asl</artifactId>
+            <version>1.9.13</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml</groupId>
+            <artifactId>jackson-module-scala</artifactId>
+            <version>1.9.3</version>
+        </dependency>
+		
+		
 		<dependency>
 			<groupId>javassist</groupId>
 			<artifactId>javassist</artifactId>
