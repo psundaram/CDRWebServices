@@ -57,5 +57,11 @@ public class TrafficBean implements Serializable{
 	public void setIncValue(String incValue) {
 		this.incValue = incValue;
 	}
+	@Override
+	public String toString() {
+		return "TrafficBean [enterpriseId=" + enterpriseId + ", fromTime=" + fromTime + ", toTime=" + toTime + ", incType=" + incType
+				+ ", incValue=" + incValue + "]";
+	}
 
+	
 }

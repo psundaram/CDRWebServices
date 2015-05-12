@@ -29,25 +29,29 @@ public class TrafficLoadController {
 
 	@RequestMapping(method = RequestMethod.POST, consumes = MediaType.APPLICATION_XML_VALUE, produces = MediaType.APPLICATION_XML_VALUE)
 	@ResponseBody
-	public String getTrafficLoad(@RequestBody String content) throws Exception {
-		JAXBContext jaxbContext = JAXBContext.newInstance(TrafficBean.class);
-		Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-		StringReader reader = new StringReader(content.toString());
-		TrafficBean trafficModel = (TrafficBean) unmarshaller.unmarshal(reader);
+	public TrafficLoadBean getTrafficLoad(@RequestBody TrafficBean trafficModel) throws Exception {
+		System.out.println("trafficModel-->"+trafficModel);
+//		JAXBContext jaxbContext = JAXBContext.newInstance(TrafficBean.class);
+//		Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+//		StringReader reader = new StringReader(content.toString());
+//		TrafficBean trafficModel = (TrafficBean) unmarshaller.unmarshal(reader);
 		TrafficLoadBean trafficLoadBean = trafficLoadService.getTrafficLoad(trafficModel);
-		return trafficLoadService.marshal(trafficLoadBean);
+//		return trafficLoadService.marshal(trafficLoadBean);
+		
+		return trafficLoadBean;
 	}
 	
 	
 	@RequestMapping(value="/json",method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-	public String getTrafficLoadJson(@RequestBody String loadBean) throws Exception {
-		System.out.println("loadBean :" + loadBean);
-		ObjectMapper mapper = new ObjectMapper();
-		TrafficBean trafficBean = mapper.readValue(loadBean, TrafficBean.class);
+	public TrafficLoadBean getTrafficLoadJson(@RequestBody TrafficBean trafficBean) throws Exception {
+		System.out.println("loadBean :" + trafficBean);
+//		ObjectMapper mapper = new ObjectMapper();
+//		TrafficBean trafficBean = mapper.readValue(loadBean, TrafficBean.class);
+		
 		TrafficLoadBean trafficLoadBean = trafficLoadService.getTrafficLoad(trafficBean);
 		String responseString = new Gson().toJson(trafficLoadBean, TrafficLoadBean.class);
 		System.out.println(responseString);
-		return responseString;
+		return trafficLoadBean;
 	}
 }
