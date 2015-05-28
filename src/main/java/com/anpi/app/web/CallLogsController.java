@@ -56,33 +56,33 @@ public class CallLogsController {
 	
 	 @RequestMapping(value="/callLogsEndUser",method=RequestMethod.POST,consumes=MediaType.APPLICATION_JSON_VALUE,produces=MediaType.APPLICATION_JSON_VALUE)
 	    @ResponseBody
-	    public String getCallLogsEndUser(@RequestBody String content) throws Exception{
-	        System.out.println("getCallLogsNewTimeZone Enters: " + content);
+	    public EnhancedCallLogsEntryList getCallLogsEndUser(@RequestBody CallLogs callLogs) throws Exception{
+	        System.out.println("getCallLogsNewTimeZone Enters: " + callLogs);
 	        String responseString = "<EnhancedCallLogs></EnhancedCallLogs>";
-	        ObjectMapper mapper = new ObjectMapper();
-			CallLogs callLogs = mapper.readValue(content, CallLogs.class);
+//	        ObjectMapper mapper = new ObjectMapper();
+//			CallLogs callLogs = mapper.readValue(content, CallLogs.class);
 	        EnhancedCallLogsEntryList listObj = callLogsService.getCallLogsForEndUser(callLogs);
 	        responseString = new Gson().toJson(listObj,EnhancedCallLogsEntryList.class);
 			System.out.println("responseString:" + responseString);
-	        return responseString;
+	        return listObj;
 
 	    }
 	 
 
 	 @RequestMapping(value="/callLogsEndUser/xml",method=RequestMethod.POST,consumes=MediaType.APPLICATION_XML_VALUE,produces=MediaType.APPLICATION_XML_VALUE)
 	    @ResponseBody
-	    public String getXmlCallLogsEndUser(@RequestBody String content) throws Exception {
-	        System.out.println("getCallLogsNewTimeZone Enters: " + content);
+	    public EnhancedCallLogsEntryList getXmlCallLogsEndUser(@RequestBody CallLogs callLogs) throws Exception {
+	        System.out.println("getCallLogsNewTimeZone Enters: " + callLogs.toString());
 	        String responseString = "<EnhancedCallLogs></EnhancedCallLogs>";
-	    	JAXBContext jaxbContext = JAXBContext.newInstance(CallLogs.class);
-			Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-			StringReader reader = new StringReader(content.toString());
-			CallLogs callLogs = (CallLogs) unmarshaller.unmarshal(reader);
-			System.out.println(callLogs.getEnterpriseId()+ ", "+callLogs.getAccounts() +" ," +callLogs.getPhoneNumbers().getPhoneNumber().get(0).getNumber());
+//	    	JAXBContext jaxbContext = JAXBContext.newInstance(CallLogs.class);
+//			Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+//			StringReader reader = new StringReader(content.toString());
+//			CallLogs callLogs = (CallLogs) unmarshaller.unmarshal(reader);
+//			System.out.println(callLogs.getEnterpriseId()+ ", "+callLogs.getAccounts() +" ," +callLogs.getPhoneNumbers().getPhoneNumber().get(0).getNumber());
 			EnhancedCallLogsEntryList enhancedCallLogsEntryList = callLogsService.getCallLogsForEndUser(callLogs);
 			responseString =  callLogsService.marshal(enhancedCallLogsEntryList);
 			System.out.println(responseString);
-			return responseString;
+			return enhancedCallLogsEntryList;
 			
 	 }
 	    /**
@@ -93,31 +93,31 @@ public class CallLogsController {
 	     */
 	@RequestMapping(value = "/callLogsAdmin", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
-	public String getCallLogsAdmin(@RequestBody String content) throws JsonParseException, JsonMappingException, IOException {
+	public EnhancedCallLogsEntryList getCallLogsAdmin(@RequestBody CallLogs callLogs) throws JsonParseException, JsonMappingException, IOException {
 		System.out.println("callLogsAdmin");
 		String responseString = "";
-		ObjectMapper mapper = new ObjectMapper();
-		CallLogs callLogs = mapper.readValue(content, CallLogs.class);
+//		ObjectMapper mapper = new ObjectMapper();
+//		CallLogs callLogs = mapper.readValue(content, CallLogs.class);
 		EnhancedCallLogsEntryList enhancedCallLogsEntryList = callLogsService.getCallLogsForAdmin(callLogs);
 		responseString = new Gson().toJson(enhancedCallLogsEntryList, EnhancedCallLogsEntryList.class);
 		System.out.println("responseString:" + responseString);
-		return responseString;
+		return enhancedCallLogsEntryList;
 
 	}
 	
 	@RequestMapping(value = "/callLogsAdmin/xml", method = RequestMethod.POST, consumes = MediaType.APPLICATION_XML_VALUE, produces = MediaType.APPLICATION_XML_VALUE)
 	@ResponseBody
-	public String getXmlCallLogsAdmin(@RequestBody String content) throws Exception  {
+	public EnhancedCallLogsEntryList getXmlCallLogsAdmin(@RequestBody CallLogs callLogs) throws Exception  {
 		System.out.println("callLogsAdmin");
 		String responseString = "";
-		JAXBContext jaxbContext = JAXBContext.newInstance(CallLogs.class);
-		Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-		StringReader reader = new StringReader(content.toString());
-		CallLogs callLogs = (CallLogs) unmarshaller.unmarshal(reader);
+//		JAXBContext jaxbContext = JAXBContext.newInstance(CallLogs.class);
+//		Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+//		StringReader reader = new StringReader(content.toString());
+//		CallLogs callLogs = (CallLogs) unmarshaller.unmarshal(reader);
 		EnhancedCallLogsEntryList enhancedCallLogsEntryList = callLogsService.getCallLogsForAdmin(callLogs);
 		responseString = callLogsService.marshal(enhancedCallLogsEntryList);
 		System.out.println("responseString:" + responseString);
-		return responseString;
+		return enhancedCallLogsEntryList;
 
 	}
 	
