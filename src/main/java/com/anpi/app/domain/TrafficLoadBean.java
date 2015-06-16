@@ -18,6 +18,10 @@ public class TrafficLoadBean {
 	@SerializedName(value="inter_com")
 	private String interComLoad;
 
+	private int inCount;
+	private int outCount;
+	private int interCount;
+	
 	public String getResponseCode() {
 		return responseCode;
 	}
@@ -61,6 +65,33 @@ public class TrafficLoadBean {
 	@XmlElement(name = "InterCom")
 	public void setInterComLoad(String interComLoad) {
 		this.interComLoad = interComLoad;
+	}
+	
+	public int getInCount() {
+		return inCount;
+	}
+
+	@XmlElement(name = "InCount")
+	public void setInCount(int inCount) {
+		this.inCount = inCount;
+	}
+
+	public int getOutCount() {
+		return outCount;
+	}
+
+	@XmlElement(name="OutCount")
+	public void setOutCount(int outCount) {
+		this.outCount = outCount;
+	}
+
+	public int getInterCount() {
+		return interCount;
+	}
+
+	@XmlElement(name="InterCount")
+	public void setInterCount(int interCount) {
+		this.interCount = interCount;
 	}
 
 	@Override

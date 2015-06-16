@@ -55,6 +55,7 @@ public class CDRDBOperations {
 				}
 				System.out.println("TrafficSummary Size :" + trafficSummaries.size());
 				// Calculate inbound,outbound, intercom values based on interval
+				
 				while (fromDateMilli < toDateMilli) {
 					long tempTimeMilli = fromDateMilli + increment;
 					int direction = 0;
@@ -92,13 +93,14 @@ public class CDRDBOperations {
 					inBound.add("[" + (new Date(fromDateMilli)).getTime() + "," + inLogCount + "]");
 					outBound.add("[" + (new Date(fromDateMilli)).getTime() + "," + outLogCount + "]");
 					interCom.add("[" + (new Date(fromDateMilli)).getTime() + "," + interCount + "]");
+					
 					fromDateMilli = tempTimeMilli;
 
 				}
 				loadBean = new TrafficLoadBean();
 				loadBean.setInBoundLoad(inBound.toString());
 				loadBean.setOutBoundLoad(outBound.toString());
-				loadBean.setInterComLoad(interCom.toString());
+				
 			}
 
 		} catch (Exception e) {
@@ -403,6 +405,9 @@ public class CDRDBOperations {
 				// Calculate inbound,outbound, intercom values based on interval
 				
 				long maxEndTime = 0l;
+				int inCount = 0;
+				int outCount = 0;
+				int intercomCount = 0;
 				while (fromDateMilli < toDateMilli) {
 					long minStartTime = new Date().getTime();
 					long tempTimeMilli = fromDateMilli + increment;
@@ -453,30 +458,33 @@ public class CDRDBOperations {
 					// Set the inbound,outbound and intercom based on the count value
 					
 					if(inLogCount>0){
-						inBound.add("[ x:" + (new Date(fromDateMilli)).getTime() + ",y: " + inLogCount + ",startTime: "+(new Date(minStartTime)).getTime() + ",endTime: " + (new Date(maxEndTime)).getTime() + "]");
+						inBound.add("{ \"x\":" + (new Date(fromDateMilli)).getTime() + ",\"y\": " + inLogCount + ",\"startTime\": "+(new Date(minStartTime)).getTime() + ",\"endTime\": " + (new Date(maxEndTime)).getTime() + "}");
 					}
 					else{
-						inBound.add("[ x:" + (new Date(fromDateMilli)).getTime() + ",y: " + inLogCount + ",startTime: 0 , endTime: 0]");
+						inBound.add("{ \"x\":" + (new Date(fromDateMilli)).getTime() + ",\"y\": " + inLogCount + ",\"startTime\": 0 , \"endTime\": 0}");
 					}
 					
 					if(outLogCount>0){
-						outBound.add("[ x:" + (new Date(fromDateMilli)).getTime() + ",y: " + outLogCount + ",startTime: "+(new Date(minStartTime)).getTime() + ",endTime: " + (new Date(maxEndTime)).getTime() + "]");
+						outBound.add("{ \"x\":" + (new Date(fromDateMilli)).getTime() + ",\"y\": " + outLogCount + ",\"startTime\": "+(new Date(minStartTime)).getTime() + ",\"endTime\": " + (new Date(maxEndTime)).getTime() + "}");
 					}
 					else{
-						outBound.add("[ x:" + (new Date(fromDateMilli)).getTime() + ",y: " + outLogCount + ",startTime: 0 , endTime: 0]");
+						outBound.add("{ \"x\":" + (new Date(fromDateMilli)).getTime() + ",\"y\": " + outLogCount + ",\"startTime\": 0 , \"endTime\": 0}");
 						
 					}
 					
 					if(interCount >0){
-						interCom.add("[ x:" + (new Date(fromDateMilli)).getTime() + ",y: " + interCount + ",startTime: "+(new Date(minStartTime)).getTime() + ",endTime: " + (new Date(maxEndTime)).getTime() + "]");
+						interCom.add("{ \"x\":" + (new Date(fromDateMilli)).getTime() + ",\"y\": " + interCount + ",\"startTime\": "+(new Date(minStartTime)).getTime() + ",\"endTime\": " + (new Date(maxEndTime)).getTime() + "}");
 						
 					}
 					else{
-						interCom.add("[ x:" + (new Date(fromDateMilli)).getTime() + ",y: " + interCount + ",startTime: 0 , endTime: 0]");
+						interCom.add("{ \"x\":" + (new Date(fromDateMilli)).getTime() + ",\"y\": " + interCount + ",\"startTime\": 0 , \"endTime\": 0}");
 					}
 					
 					//outBound.add("[" + (new Date(fromDateMilli)).getTime() + "," + outLogCount + "]");
 					//interCom.add("[" + (new Date(fromDateMilli)).getTime() + "," + interCount + "]");
+					inCount +=inLogCount;
+					outCount +=outLogCount;
+					intercomCount +=interCount;
 					fromDateMilli = tempTimeMilli;
 
 				}
@@ -484,6 +492,11 @@ public class CDRDBOperations {
 				loadBean.setInBoundLoad(inBound.toString());
 				loadBean.setOutBoundLoad(outBound.toString());
 				loadBean.setInterComLoad(interCom.toString());
+				loadBean.setInterComLoad(interCom.toString());
+				loadBean.setInCount(inCount);
+				loadBean.setOutCount(outCount);
+				loadBean.setInterCount(intercomCount);
+				System.out.println("inCount:"+inCount+"outcount:"+outCount+"interCount:"+intercomCount);
 			}
 
 		} catch (Exception e) {
