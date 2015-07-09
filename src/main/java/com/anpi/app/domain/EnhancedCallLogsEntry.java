@@ -7,44 +7,46 @@ package com.anpi.app.domain;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @XmlRootElement(name = "enhancedCallLogsExtendedEntry")
 public class EnhancedCallLogsEntry {
 
-	@SerializedName("date")
+	@JsonProperty("date")
 	private String callDate;
-	@SerializedName("milliseconds")
+	@JsonProperty("milliseconds")
 	private long datecreated;
-	@SerializedName("from_name")
+	@JsonProperty("from_name")
 	private String fromName;
-	@SerializedName("from_last_name")
+	@JsonProperty("from_last_name")
 	private String fromLastName;
-	@SerializedName("from_number")
+	@JsonProperty("from_number")
 	private String fromnumber;
-	@SerializedName("to_name")
+	@JsonProperty("to_name")
 	private String toName;
-	@SerializedName("to_last_name")
+	@JsonProperty("to_last_name")
 	private String toLastName;
-	@SerializedName("to_number")
+	@JsonProperty("to_number")
 	private String tonumber;
-	@SerializedName("start_time")
+	@JsonProperty("start_time")
 	private long starttime;
-	@SerializedName("end_time")
+	@JsonProperty("end_time")
 	private long endtime;
 	private int status;
-	@SerializedName("bound")
+	@JsonProperty("bound")
 	private int direction;
-	@SerializedName("from_extension")
+	@JsonProperty("from_extension")
 	private String fromExtension;
-	@SerializedName("to_extension")
+	@JsonProperty("to_extension")
 	private String toExtension;
 	private long duration;
-	@SerializedName("time_zone")
+	@JsonProperty("time_zone")
 	private String timeZone;
-	@SerializedName("answer_indicator")
+	@JsonProperty("answer_indicator")
 	private String answerIndicator;
-
+	@JsonProperty("duration_str")
+	private String durationS;
+	
 	@XmlElement(name = "answerIndicator")
 	public String getAnswerIndicator() {
 		return answerIndicator;
@@ -198,4 +200,14 @@ public class EnhancedCallLogsEntry {
 		this.timeZone = timeZone;
 	}
 
+	public String getDurationS() {
+		return durationS;
+	}
+
+	@XmlElement(name = "durationStr")
+	public void setDurationS(String durationS) {
+		this.durationS = durationS;
+	}
+
+	
 }

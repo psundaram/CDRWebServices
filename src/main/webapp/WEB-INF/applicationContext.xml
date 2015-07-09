@@ -4,14 +4,90 @@
        xmlns:tx="http://www.springframework.org/schema/tx"
        xmlns:mvc="http://www.springframework.org/schema/mvc"
        xmlns:context="http://www.springframework.org/schema/context"
-       xsi:schemaLocation="http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.0.xsd
-		                  http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+       xsi:schemaLocation="http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+		                  http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
 		                  http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
 		                  http://www.springframework.org/schema/mvc
                             http://www.springframework.org/schema/mvc/spring-mvc-3.1.xsd">
 
 
   <context:component-scan base-package="com.anpi.app.*" />
+  
+   <bean id="sessionFactory" class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+       <!--  <property name="dataSource" ref="dataSource" /> -->
+
+        <property name="hibernateProperties">
+            <props>
+        	<prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop>
+        <prop key="hibernate.connection.driver_class">com.mysql.jdbc.Driver</prop>
+        
+        <prop key="hibernate.connection.url">jdbc:mysql://10.2.2.134:3306/CallLogsTest?autoReconnect=true</prop>
+        <prop key="hibernate.connection.username">dba</prop>
+        <prop key="hibernate.connection.password">mySQLdba</prop>
+        
+                <prop key="hibernate.show_sql">true</prop>
+<!--                 <prop key="hibernate.max_fetch_depth">2</prop>
+ --><!--                    <prop key="hibernate.connection.zeroDateTimeBehavior">convertToNull</prop>
+ -->
+              <!--   <prop key="show_sql">true</prop> -->
+                <prop key="format_sql">true</prop>
+                <prop key="use_sql_comments">true</prop>
+                <prop key="hibernate.generate_statistics">true</prop>
+                <prop key="validationQuery">select 1</prop> 
+				                
+
+                <prop key="connection.autoReconnect">true</prop>
+        <prop key="connection.autoReconnectForPools">true</prop>
+        <prop key="connection.is-connection-validation-required">true</prop>
+        <prop key="current_session_context_class">thread</prop>
+        <prop key="max_fetch_depth">1</prop>
+                <prop key="connection.isolation">2</prop>
+        <prop key="connection.autocommit">true</prop>
+        <!-- configuration pool via c3p0-->
+        <prop key="c3p0.acquire_increment">1</prop>
+        <prop key="c3p0.idle_test_period">3600</prop> <!-- seconds -->
+        <prop key="c3p0.max_size">1</prop>
+        <prop key="c3p0.max_statements">0</prop>
+        <prop key="c3p0.min_size">1</prop>
+        <prop key="c3p0.timeout">3605</prop> <!-- seconds -->
+        <prop key="hibernate.c3p0.preferredTestQuery">select 1;</prop>
+        
+            </props>
+        </property>
+
+
+
+        <property name="annotatedClasses">
+            <list>
+				<value>com.anpi.app.model.CallLogDetail</value>
+			</list>
+        </property>
+
+    </bean>
+
+    <bean id="transactionInterceptor" class="org.springframework.transaction.interceptor.TransactionInterceptor">
+        <property name="transactionManager" ref="transactionManager" />
+        <property name="transactionAttributes">
+            <props>
+                <prop key="save">PROPAGATION_REQUIRED</prop>
+            </props>
+        </property>
+    </bean>
+
+    <bean id="transactionManager" class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+        <!--<property name="dataSource" ref="dataSource" />-->
+        <property name="sessionFactory" ref="sessionFactory" />
+    </bean>
+
+  <!--   <bean name="openSessionInViewInterceptor" class="org.springframework.orm.hibernate3.support.OpenSessionInViewInterceptor">
+        <property name="sessionFactory" ref="sessionFactory" />
+    </bean> -->
+
+    <tx:annotation-driven transaction-manager="transactionManager" />
+     <context:annotation-config/>
+    
+  
+  
 <mvc:annotation-driven/>
   <mvc:annotation-driven>
         <mvc:message-converters>

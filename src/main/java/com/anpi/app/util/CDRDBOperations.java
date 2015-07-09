@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.TimeZone;
 import java.util.logging.Logger;
 
+import org.apache.axis.client.Call;
+
+import com.anpi.app.domain.CallLogs;
 import com.anpi.app.domain.EnhancedCallLogsEntry;
 import com.anpi.app.domain.TrafficLoadBean;
 import com.anpi.app.domain.TrafficSummary;
@@ -24,7 +27,7 @@ public class CDRDBOperations {
 		long startTime = new Date().getTime();
 		System.out.println("sEnterpriseId :" + stEnterPriseId + ", fromDateMilli" + fromDateMilli + ",toDateMilli" + toDateMilli + ",increment:" + increment);
 		TrafficLoadBean loadBean = null;
-		CDRConnector cdrConnector = new CDRConnector();
+//		CDRConnector cdrConnector = new CDRConnector();
 		Connection conn = null;
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
@@ -34,7 +37,7 @@ public class CDRDBOperations {
 		try {
 			if (fromDateMilli < toDateMilli) {
 				// Connect to database
-				conn = cdrConnector.getDBConnection();
+				conn = CDRConnector.getDBConnection();
 				String stInsert = "select A.starttime,A.endtime,SUM(CASE WHEN direction = 'In' THEN 1 ELSE 2 END) as directiontype from (SELECT direction,starttime,endtime,fromnumber,tonumber,duration FROM tbCallLog where enterpriseid =?  and (starttime>? and endtime<?) group by  direction,starttime,endtime,fromnumber,tonumber,duration ) as A  group by  starttime,endtime,fromnumber,tonumber,duration"; 
 //						"select starttime,endtime,SUM(CASE WHEN direction = 'In' THEN 1 ELSE 2 END) as directiontype from (select * from  (SELECT direction,starttime,endtime,fromnumber,tonumber,duration FROM tbCallLog where enterpriseid =?  and (starttime>? and endtime<?)) as directions  group by  direction,starttime,endtime,fromnumber,tonumber,duration ) as cdr  group by  starttime,endtime,fromnumber,tonumber,duration";
 				// String stInsert =
@@ -107,23 +110,22 @@ public class CDRDBOperations {
 			e.printStackTrace();
 		} finally {
 			// Close db connection
-			cdrConnector.closeConnection(conn);
+			pstmt.close();
+			rs.close();
+			conn.close();
 		}
 		System.out.println("TotalTime:" + (new Date().getTime() - startTime));
 		return loadBean;
 	}
 
-	public ArrayList<EnhancedCallLogsEntry> getCallLogsTimeZoneNew(String stEnterpriseId, String accountIdList, long fromDateMilli, long toDateMilli, ArrayList<String> phoneNumbers, HashMap<String, String> timeZoneMap) {
+	public ArrayList<EnhancedCallLogsEntry> getCallLogsTimeZoneNew(String stEnterpriseId, String accountIdList, long fromDateMilli, long toDateMilli, ArrayList<String> phoneNumbers, HashMap<String, String> timeZoneMap,CallLogs callLogs) throws Exception {
 		Connection conn = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         EnhancedCallLogsEntry callLogsEntry = null;
         ArrayList<EnhancedCallLogsEntry> list = new ArrayList<EnhancedCallLogsEntry>();
-        String stTempNumber = null;
-        String fromNumber = "";
-        String toNumber = "";
         try {
-            conn = new CDRConnector().getDBConnection();
+            conn = CDRConnector.getDBConnection();
            
 			String stInsert = "select * from ( SELECT fromnumber,tonumber,starttime,endtime,duration,datecreated,direction,subscriberid,enterpriseid,answerindicator," + "    SUM( " + "        CASE"
 					+ "           WHEN direction = 'IN' " + "           THEN 1 " + "           ELSE 2 " + "        END) as directiontype, " + "     SUM( " + "        CASE "
@@ -131,7 +133,22 @@ public class CDRDBOperations {
 					+ "from tbCallLog   WHERE  enterpriseid=? and starttime>? and endtime<? " + "group by fromnumber,tonumber,starttime,endtime,duration ) as a "
 					+ "where ACCOUNTFILTER!=0 order by starttime";
             System.out.println(stInsert);
-            pstmt = conn.prepareStatement(stInsert);
+            int pageSize= callLogs.getPageSize();
+            int pageNumber = callLogs.getPageNumber();
+           
+    		if(pageSize!=0){
+    			System.out.println("PageSize:"+pageSize);
+    			stInsert+=" limit "+pageSize;
+    			System.out.println("StInsert:"+stInsert);
+    			
+    		}
+    		if(pageNumber!=0){
+	    			if(pageSize!=0){
+	    			pageNumber = (pageNumber - 1) * pageSize;
+	    			stInsert+=" offset "+pageNumber;
+	    			}
+	    	}
+    		pstmt = conn.prepareStatement(stInsert);
 //            pstmt.setString(1,accountIdList);
             pstmt.setString(1, stEnterpriseId);
             pstmt.setLong(2, fromDateMilli);
@@ -141,19 +158,19 @@ public class CDRDBOperations {
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 callLogsEntry = new EnhancedCallLogsEntry();
-                callLogsEntry.setFromnumber(checkPhoneNumber(rs.getString("fromnumber")));
-                callLogsEntry.setTonumber(checkPhoneNumber(rs.getString("tonumber")));
+                callLogsEntry.setFromnumber(CommonUtils.checkPhoneNumber(rs.getString("fromnumber")));
+                callLogsEntry.setTonumber(CommonUtils.checkPhoneNumber(rs.getString("tonumber")));
                 callLogsEntry.setDatecreated(rs.getLong("starttime"));
                 callLogsEntry.setAnswerIndicator(rs.getString("answerindicator"));
-                callLogsEntry.setCallDate(getDate(rs.getLong("starttime")));
+                callLogsEntry.setCallDate(CommonUtils.getDate(rs.getLong("starttime")));
                 callLogsEntry.setStarttime(rs.getLong("starttime"));
                 callLogsEntry.setEndtime(rs.getLong("endtime"));
                 callLogsEntry.setDuration(rs.getLong("duration"));
                 callLogsEntry.setDirection(rs.getInt("directiontype"));
                 if (timeZoneMap.get(callLogsEntry.getFromnumber())!=null) { //OutBound and Intercom
-                    callLogsEntry.setTimeZone(getTimeZoneDate(rs.getLong("starttime"), timeZoneMap.get(callLogsEntry.getFromnumber())));
+                    callLogsEntry.setTimeZone(CommonUtils.getTimeZoneDate(rs.getLong("starttime"), timeZoneMap.get(callLogsEntry.getFromnumber())));
                 } else {
-                    callLogsEntry.setTimeZone(getTimeZoneDate(rs.getLong("starttime"), timeZoneMap.get(callLogsEntry.getTonumber())));
+                    callLogsEntry.setTimeZone(CommonUtils.getTimeZoneDate(rs.getLong("starttime"), timeZoneMap.get(callLogsEntry.getTonumber())));
                 }
                 list.add(callLogsEntry);
             }
@@ -165,13 +182,15 @@ public class CDRDBOperations {
             ex.printStackTrace();
             System.out.println(ex);
         } finally {
-            new CDRConnector().closeConnection(conn);
+        	pstmt.close();
+			rs.close();
+			conn.close();
         }
         return list;
 	}
 	
 	
-	 public ArrayList<EnhancedCallLogsEntry> getCallLogsTimeZoneNew(String stEnterPriseId,String stAccountIds, ArrayList<String> phoneNumbers, HashMap<String, String> timeZoneMap) {
+	 public ArrayList<EnhancedCallLogsEntry> getCallLogsTimeZoneNew(String stEnterPriseId,String stAccountIds, ArrayList<String> phoneNumbers, HashMap<String, String> timeZoneMap,CallLogs callLogs) throws Exception {
 	        Logger.getLogger(CDRDBOperations.class.getName()).info("getCallLogsNew(String stEnterPriseId,ArrayList<String> phoneNumbers) : Comes in : ");
 	        Connection conn = null;
 	        PreparedStatement pstmt = null;
@@ -182,30 +201,45 @@ public class CDRDBOperations {
 //	        String fromNumber = "";
 //	        String toNumber = "";
 	        try {
-	            conn = new CDRConnector().getDBConnection();
+	            conn = CDRConnector.getDBConnection();
 	            
 			String stInsert = "select * from ( SELECT fromnumber,tonumber,starttime,endtime,duration,datecreated,direction,subscriberid,enterpriseid,answerindicator," + "    SUM( " + "        CASE"
 					+ "           WHEN direction = 'IN' " + "           THEN 1 " + "           ELSE 2 " + "        END) as directiontype, " + "     SUM( " + "        CASE "
 					+ "        WHEN subscriberid IN(" + stAccountIds + ") " + "        THEN 1 " + "        ELSE 0 " + "END) as ACCOUNTFILTER " + "from tbCallLog   WHERE  enterpriseid=? "
 					+ "group by fromnumber,tonumber,starttime,endtime,duration ) as a " + "where ACCOUNTFILTER!=0 order by starttime";
-	            pstmt = conn.prepareStatement(stInsert);
+			int pageSize= callLogs.getPageSize();
+            int pageNumber = callLogs.getPageNumber();
+           
+    		if(pageSize!=0){
+    			System.out.println("PageSize:"+pageSize);
+    			stInsert+=" limit "+pageSize;
+    			System.out.println("StInsert:"+stInsert);
+    			
+    		}
+    		if(pageNumber!=0){
+	    			if(pageSize!=0){
+	    			pageNumber = (pageNumber - 1) * pageSize;
+	    			stInsert+=" offset "+pageNumber;
+	    			}
+	    	}   
+			pstmt = conn.prepareStatement(stInsert);
 	            pstmt.setString(1, stEnterPriseId);
 	            rs = pstmt.executeQuery();
 	            while (rs.next()) {
 	                callLogsEntry = new EnhancedCallLogsEntry();
-	                callLogsEntry.setFromnumber(checkPhoneNumber(rs.getString("fromnumber")));
-	                callLogsEntry.setTonumber(checkPhoneNumber(rs.getString("tonumber")));
+	                callLogsEntry.setFromnumber(CommonUtils.checkPhoneNumber(rs.getString("fromnumber")));
+	                callLogsEntry.setTonumber(CommonUtils.checkPhoneNumber(rs.getString("tonumber")));
 	                callLogsEntry.setDatecreated(rs.getLong("starttime"));
-	                callLogsEntry.setCallDate(getDate(rs.getLong("starttime")));
+	                callLogsEntry.setCallDate(CommonUtils.getDate(rs.getLong("starttime")));
 	                callLogsEntry.setStarttime(rs.getLong("starttime"));
 	                callLogsEntry.setEndtime(rs.getLong("endtime"));
 	                callLogsEntry.setAnswerIndicator(rs.getString("answerindicator"));
 	                callLogsEntry.setDuration(rs.getLong("duration"));
 	                callLogsEntry.setDirection(rs.getInt("directiontype"));
 	                if (timeZoneMap.get(callLogsEntry.getFromnumber())!=null) {
-	                    callLogsEntry.setTimeZone(getTimeZoneDate(rs.getLong("starttime"), timeZoneMap.get(callLogsEntry.getFromnumber())));
+	                    callLogsEntry.setTimeZone(CommonUtils.getTimeZoneDate(rs.getLong("starttime"), timeZoneMap.get(callLogsEntry.getFromnumber())));
 	                } else {
-	                    callLogsEntry.setTimeZone(getTimeZoneDate(rs.getLong("starttime"), timeZoneMap.get(callLogsEntry.getTonumber())));
+	                    callLogsEntry.setTimeZone(CommonUtils.getTimeZoneDate(rs.getLong("starttime"), timeZoneMap.get(callLogsEntry.getTonumber())));
 	                }
 	                list.add(callLogsEntry);
 	            }
@@ -214,13 +248,15 @@ public class CDRDBOperations {
 	        } catch (Exception ex) {
 	        	System.out.println(ex);
 	        } finally {
-	           new CDRConnector().closeConnection(conn);
+	        	pstmt.close();
+				rs.close();
+				conn.close();
 	        }
 	        return list;
 	    }
 	
 	 
-	 public ArrayList<EnhancedCallLogsEntry> getCallLogsAdmin(String stEnterPriseId, long fromDateMilli, long toDateMilli, String stAdminTimeZone) {
+	 public ArrayList<EnhancedCallLogsEntry> getCallLogsAdmin(String stEnterPriseId, long fromDateMilli, long toDateMilli, String stAdminTimeZone,CallLogs callLogs) throws Exception {
 	      System.out.println("getCallLogsTimeZoneNew Without Account Ids  "+stEnterPriseId);
 	        Connection conn = null;
 	        PreparedStatement pstmt = null;
@@ -228,9 +264,25 @@ public class CDRDBOperations {
 	        EnhancedCallLogsEntry callLogsEntry = null;
 	        ArrayList<EnhancedCallLogsEntry> list = new ArrayList<EnhancedCallLogsEntry>();
 	        try {
-	            conn = new CDRConnector().getDBConnection();
+	            conn = CDRConnector.getDBConnection();
+	            System.out.println("conn"+conn);
 	            String stInsert = "select fromnumber,tonumber,starttime,endtime,duration,datecreated,direction,answerindicator,SUM(CASE WHEN direction = 'In' THEN 1 ELSE 2 END) as directiontype,subscriberid from tbCallLog WHERE starttime>? and endtime<? and enterpriseid=? group by fromnumber,tonumber,starttime,endtime,duration order by starttime desc ";
 	            System.out.println(stInsert);
+	            int pageSize= callLogs.getPageSize();
+	            int pageNumber = callLogs.getPageNumber();
+	           
+	    		if(pageSize!=0){
+	    			System.out.println("PageSize:"+pageSize);
+	    			stInsert+=" limit "+pageSize;
+	    			System.out.println("StInsert:"+stInsert);
+	    			
+	    		}
+	    		if(pageNumber!=0){
+		    			if(pageSize!=0){
+		    			pageNumber = (pageNumber - 1) * pageSize;
+		    			stInsert+=" offset "+pageNumber;
+		    			}
+		    	}
 	            pstmt = conn.prepareStatement(stInsert);
 	            pstmt.setLong(1, fromDateMilli);
 	            pstmt.setLong(2, toDateMilli);
@@ -239,16 +291,16 @@ public class CDRDBOperations {
 	            rs = pstmt.executeQuery();
 	            while (rs.next()) {
 	                callLogsEntry = new EnhancedCallLogsEntry();
-	                callLogsEntry.setFromnumber(checkPhoneNumber(rs.getString("fromnumber")));
-	                callLogsEntry.setTonumber(checkPhoneNumber(rs.getString("tonumber")));
+	                callLogsEntry.setFromnumber(CommonUtils.checkPhoneNumber(rs.getString("fromnumber")));
+	                callLogsEntry.setTonumber(CommonUtils.checkPhoneNumber(rs.getString("tonumber")));
 	                callLogsEntry.setDatecreated(rs.getLong("starttime"));
 	                callLogsEntry.setAnswerIndicator(rs.getString("answerindicator"));
-	                callLogsEntry.setCallDate(getDate(rs.getLong("starttime")));
+	                callLogsEntry.setCallDate(CommonUtils.getDate(rs.getLong("starttime")));
 	                callLogsEntry.setStarttime(rs.getLong("starttime"));
 	                callLogsEntry.setEndtime(rs.getLong("endtime"));
 	                callLogsEntry.setDuration(rs.getLong("duration"));
 	                callLogsEntry.setDirection(rs.getInt("directiontype"));
-	                callLogsEntry.setTimeZone(getTimeZoneDate(rs.getLong("starttime"), stAdminTimeZone));
+	                callLogsEntry.setTimeZone(CommonUtils.getTimeZoneDate(rs.getLong("starttime"), stAdminTimeZone));
 	                list.add(callLogsEntry);
 	            }
 	        } catch (SQLException ex) {
@@ -258,12 +310,14 @@ public class CDRDBOperations {
 	            ex.printStackTrace();
 	            System.out.println(ex);
 	        } finally {
-	            new CDRConnector().closeConnection(conn);
+	        	pstmt.close();
+				rs.close();
+				conn.close();
 	        }
 	        return list;
 	    }
 	    
-	    public ArrayList<EnhancedCallLogsEntry> getCallLogsAdmin(String stEnterPriseId, String stAdminTimeZone) {
+	    public ArrayList<EnhancedCallLogsEntry> getCallLogsAdmin(String stEnterPriseId, String stAdminTimeZone,CallLogs callLogs) throws Exception {
 	        Logger.getLogger(CDRDBOperations.class.getName()).info("getCallLogsTimeZoneNew Without Account Ids : Comes in : " +stEnterPriseId);
 	        Connection conn = null;
 	        PreparedStatement pstmt = null;
@@ -271,8 +325,23 @@ public class CDRDBOperations {
 	        EnhancedCallLogsEntry callLogsEntry = null;
 	        ArrayList<EnhancedCallLogsEntry> list = new ArrayList<EnhancedCallLogsEntry>();
 	        try {
-	            conn = new CDRConnector().getDBConnection();
+	            conn = CDRConnector.getDBConnection();
 	            String stInsert = "select fromnumber,tonumber,starttime,endtime,duration,datecreated,direction,answerindicator,SUM(CASE WHEN direction = 'In' THEN 1 ELSE 2 END) as directiontype,subscriberid from tbCallLog WHERE enterpriseid=? group by fromnumber,tonumber,starttime,endtime,duration order by starttime desc ";
+	            int pageSize= callLogs.getPageSize();
+	            int pageNumber = callLogs.getPageNumber();
+	           
+	    		if(pageSize!=0){
+	    			System.out.println("PageSize:"+pageSize);
+	    			stInsert+=" limit "+pageSize;
+	    			System.out.println("StInsert:"+stInsert);
+	    			
+	    		}
+	    		if(pageNumber!=0){
+		    			if(pageSize!=0){
+		    			pageNumber = (pageNumber - 1) * pageSize;
+		    			stInsert+=" offset "+pageNumber;
+		    			}
+		    	}
 	            System.out.println(stInsert);
 	            pstmt = conn.prepareStatement(stInsert);
 	            pstmt.setString(1, stEnterPriseId);
@@ -280,16 +349,16 @@ public class CDRDBOperations {
 	            rs = pstmt.executeQuery();
 	            while (rs.next()) {
 	                callLogsEntry = new EnhancedCallLogsEntry();
-	                callLogsEntry.setFromnumber(checkPhoneNumber(rs.getString("fromnumber")));
-	                callLogsEntry.setTonumber(checkPhoneNumber(rs.getString("tonumber")));
+	                callLogsEntry.setFromnumber(CommonUtils.checkPhoneNumber(rs.getString("fromnumber")));
+	                callLogsEntry.setTonumber(CommonUtils.checkPhoneNumber(rs.getString("tonumber")));
 	                callLogsEntry.setDatecreated(rs.getLong("starttime"));
 	                callLogsEntry.setAnswerIndicator(rs.getString("answerindicator"));
-	                callLogsEntry.setCallDate(getDate(rs.getLong("starttime")));
+	                callLogsEntry.setCallDate(CommonUtils.getDate(rs.getLong("starttime")));
 	                callLogsEntry.setStarttime(rs.getLong("starttime"));
 	                callLogsEntry.setEndtime(rs.getLong("endtime"));
 	                callLogsEntry.setDuration(rs.getLong("duration"));
 	                callLogsEntry.setDirection(rs.getInt("directiontype"));
-	                callLogsEntry.setTimeZone(getTimeZoneDate(rs.getLong("starttime"), stAdminTimeZone));
+	                callLogsEntry.setTimeZone(CommonUtils.getTimeZoneDate(rs.getLong("starttime"), stAdminTimeZone));
 	                list.add(callLogsEntry);
 	            }
 	        } catch (SQLException ex) {
@@ -298,81 +367,20 @@ public class CDRDBOperations {
 	        } catch (Exception ex) {
 	            ex.printStackTrace();
 	        } finally {
-	            new CDRConnector().closeConnection(conn);
+	        	pstmt.close();
+				rs.close();
+				conn.close();
 	        }
 	        return list;
 	    }
 	    
-	    private String checkPhoneNumber(String stTempNumber) {
-	        if (stTempNumber.startsWith("+1")) {
-	            stTempNumber = stTempNumber.substring(2, stTempNumber.length());
-	        }
-	        if (stTempNumber.length() == 10) {
-	            //stTempNumber = stTempNumber.substring(0, 3) + "-" + stTempNumber.substring(3, 6) + "-" + stTempNumber.substring(6, 10);
-	        }
-	        return stTempNumber;
-	    }
-
-	    private String getDate(long millSeconds) {
-	        Date date = new Date(millSeconds);
-	        DateFormat dateFormat = null;
-	        if (isToday(date)) {
-	            dateFormat = new SimpleDateFormat(" ; hh:mm a");
-	            return "Today " + dateFormat.format(date);
-	        } else {
-	            dateFormat = new SimpleDateFormat("MM/dd/yy ; hh:mm a");
-	            return dateFormat.format(date);
-	        }
-	    }
-
-	    private boolean isToday(Date date) {
-//	        Calendar first = Calendar.getInstance();
-//	        first.setTime(date);
-//	        Calendar second = Calendar.getInstance();
-//	        if(this.stTodayDate!=null)
-//	        {
-//	            DateFormat dtFormat = new SimpleDateFormat("M/d/y");
-//	            try {
-//	                Date todayDate = dtFormat.parse(this.stTodayDate);
-//	                second.setTime(todayDate);
-//	            } catch (ParseException ex) {
-//	                java.util.logging.Logger.getLogger(CDRDBOperations.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-//	            }
-//	        }
-//	        if (first.get(Calendar.YEAR) == second.get(Calendar.YEAR) && first.get(Calendar.MONTH) == second.get(Calendar.MONTH) && first.get(Calendar.DATE) == second.get(Calendar.DATE)) {
-//	            return true;
-//	        }
-	        return false;
-	    }
-
-	    private String getTimeZoneDate(long timeMillSeconds, String stTimeKey) {
-	        String[] split = null;
-	        if (stTimeKey != null && !stTimeKey.trim().equals("")) {
-	            split = stTimeKey.split("---");
-	        } else {
-	            split = new String[2];
-	            split[0] = "GMT";
-	            split[1] = "GMT";
-	        }
-	        Date date = new Date(timeMillSeconds);
-	        DateFormat dateFormat = null;
-	        if (isToday(date)) {
-	            dateFormat = new SimpleDateFormat(" ; hh:mm a");
-	            dateFormat.setTimeZone(TimeZone.getTimeZone(split[0]));
-	            return "Today " + dateFormat.format(date)+";  "+split[1];
-	        } else {
-	            dateFormat = new SimpleDateFormat("MM/dd/yy ; hh:mm a");
-	            dateFormat.setTimeZone(TimeZone.getTimeZone(split[0]));
-	            return dateFormat.format(date)+";  "+split[1];
-	        }
-	    }
-
+	   
 		public TrafficLoadBean getTrafficLoad1(String stEnterPriseId, long fromDateMilli, long toDateMilli, long increment) throws Exception {
 		List<TrafficSummary> trafficSummaries = new ArrayList<TrafficSummary>();
 		long startTime = new Date().getTime();
 		System.out.println("sEnterpriseId :" + stEnterPriseId + ", fromDateMilli" + fromDateMilli + ",toDateMilli" + toDateMilli + ",increment:" + increment);
 		TrafficLoadBean loadBean = null;
-		CDRConnector cdrConnector = new CDRConnector();
+//		CDRConnector cdrConnector = CDRConnector;
 		Connection conn = null;
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
@@ -382,7 +390,7 @@ public class CDRDBOperations {
 		try {
 			if (fromDateMilli < toDateMilli) {
 				// Connect to database
-				conn = cdrConnector.getDBConnection();
+				conn = CDRConnector.getDBConnection();
 				String stInsert = "select A.starttime,A.endtime,SUM(CASE WHEN direction = 'In' THEN 1 ELSE 2 END) as directiontype from (SELECT direction,starttime,endtime,fromnumber,tonumber,duration FROM tbCallLog where enterpriseid =?  and (starttime>? and endtime<?) group by  direction,starttime,endtime,fromnumber,tonumber,duration ) as A  group by  starttime,endtime,fromnumber,tonumber,duration"; 
 //						"select starttime,endtime,SUM(CASE WHEN direction = 'In' THEN 1 ELSE 2 END) as directiontype from (select * from  (SELECT direction,starttime,endtime,fromnumber,tonumber,duration FROM tbCallLog where enterpriseid =?  and (starttime>? and endtime<?)) as directions  group by  direction,starttime,endtime,fromnumber,tonumber,duration ) as cdr  group by  starttime,endtime,fromnumber,tonumber,duration";
 				// String stInsert =
@@ -503,7 +511,9 @@ public class CDRDBOperations {
 			e.printStackTrace();
 		} finally {
 			// Close db connection
-			cdrConnector.closeConnection(conn);
+			pstmt.close();
+			rs.close();
+			conn.close();
 		}
 		System.out.println("TotalTime:" + (new Date().getTime() - startTime));
 		return loadBean;

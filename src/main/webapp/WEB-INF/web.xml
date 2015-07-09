@@ -40,6 +40,10 @@
                 WEB-INF/applicationContext.xml
             </param-value>
         </init-param>
+        <init-param>
+        <param-name>listings</param-name>
+        <param-value>true</param-value>
+    </init-param>
 
         <load-on-startup>1</load-on-startup>
     </servlet>
@@ -48,5 +52,9 @@
         <servlet-name>ANPICDR API</servlet-name>
         <url-pattern>/</url-pattern>
     </servlet-mapping>
+   <!--   <servlet-mapping>
+        <servlet-name>LoadOnStartUpServlet</servlet-name>
+        <url-pattern>/LoadOnStartUpServlet</url-pattern>
+    </servlet-mapping> -->
 
 </web-app>

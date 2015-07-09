@@ -5,22 +5,26 @@
 package com.anpi.app.domain;
 
 import java.util.List;
+
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @XmlRootElement(name = "EnhancedCallLogs")
 public class EnhancedCallLogsEntryList {
 
-	@SerializedName("response_code")
+	@JsonProperty("response_code")
 	private String responseCode;
 
-	@SerializedName("response_text")
+	@JsonProperty("response_text")
 	private String responseText;
 
-	@SerializedName("enhanced_call_logs_extended_entry")
+	@JsonProperty("enhanced_call_logs_extended_entry")
 	private List<EnhancedCallLogsEntry> entryList;
+	
+	@JsonProperty("direction_type_count")
+	private DirectionType directionTypes;
 
 	public String getResponseCode() {
 		return responseCode;
@@ -48,5 +52,18 @@ public class EnhancedCallLogsEntryList {
 	public void setEntryList(List<EnhancedCallLogsEntry> entryList) {
 		this.entryList = entryList;
 	}
+
+	@XmlElement(name = "DirectionTypeCount")
+	public void setDirectionTypes(DirectionType directionTypes) {
+		this.directionTypes = directionTypes;
+	}
+
+	public DirectionType getDirectionTypes() {
+		return directionTypes;
+	}
+
+	
+	
+	
 
 }
